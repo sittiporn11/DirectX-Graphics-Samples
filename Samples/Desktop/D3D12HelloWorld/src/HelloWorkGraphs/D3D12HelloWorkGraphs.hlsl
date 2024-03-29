@@ -80,7 +80,7 @@ void firstNode(
 }
 
 // --------------------------------------------------------------------------------------------------------------------------------
-// seconcNode is thread launch, so one thread per input record.
+// secondNode is thread launch, so one thread per input record.
 // 
 // Logs to the UAV and then sends a task to thirdNode
 // --------------------------------------------------------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ void thirdNode(
     // flushing the current work.
     if (threadIndex >= inputData.Count())
         return;
-
+         
     for (uint i = 0; i < c_numEntryRecords; i++)
     {
         g_sum[i] = 0;
@@ -129,11 +129,11 @@ void thirdNode(
 
     // New way to do barriers by parameter.
     // This instance is like GroupMemoryBarrierWithGroupSync();
-    Barrier(GROUP_SHARED_MEMORY, GROUP_VISIBLE, GROUP_SYNC);
+    Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE|GROUP_SYNC);
 
     InterlockedAdd(g_sum[inputData[threadIndex].entryRecordIndex],1);
 
-    Barrier(GROUP_SHARED_MEMORY, GROUP_VISIBLE, GROUP_SYNC);
+    Barrier(GROUP_SHARED_MEMORY, GROUP_SCOPE|GROUP_SYNC);
 
     if (threadIndex > 0)
         return;
@@ -141,6 +141,6 @@ void thirdNode(
     for (uint l = 0; l < c_numEntryRecords; l++)
     {
         uint recordIndex = c_numEntryRecords + l;
-        UAV[recordIndex] = g_sum[l];
+        InterlockedAdd(UAV[recordIndex],g_sum[l]);
     }
 }
